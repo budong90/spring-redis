@@ -1,9 +1,11 @@
 package com.example.web.security;
 
+import org.apache.commons.configuration.PropertiesConfiguration;
 import sun.security.rsa.RSAPrivateCrtKeyImpl;
 import sun.security.rsa.RSAPublicKeyImpl;
 
 import java.io.FileInputStream;
+import java.security.Key;
 import java.security.KeyPair;
 import java.security.PrivateKey;
 import java.security.PublicKey;
@@ -49,7 +51,8 @@ public class SecurityUtils {
     }
 
     public static void main(String[] args) throws Exception {
-        String text = "天才就是99%的汗水+1%的灵感";
+        String text = "天才就是99%的汗水+1%的灵感，但没有这1%的灵感那99%的汗水也是徒劳";
+        text = "FsS7UN6eqyFEB/OjYaJg6bBjgKMZCbQnreRizdrEbOCZV+VNlpi8Wkp+ExpMGV7tnuBBcPUZNk6hNXevHR/2zver0cX1uVWrR8D//x2ql6nLQWvW4LKCl7O2cfEd27ZrxyZJrI6z+afnuMexkLB2PNtB4En3tBydhhGSxnRT7as=";
 //        String encrypt = SecurityUtils.encrypt(text);
 //        System.out.println(encrypt);
 //        String decrypt = SecurityUtils.decrypt(text);
@@ -64,8 +67,25 @@ public class SecurityUtils {
         byte[] encryptByte = RSAUtils.encryptData(text.getBytes(), publicKey);
         String afterencrypt = Base64Utils.encode(encryptByte);
         System.out.println("加密：" + afterencrypt);
+        System.out.println("加密：" + afterencrypt.length());
         byte[] decryptByte = RSAUtils.decryptData(Base64Utils.decode(afterencrypt), privateKey);
         String decryptStr = new String(decryptByte, "utf-8");
         System.out.println("解密：" + decryptStr);
+
+        String file = "D://key.pem";
+        RSAUtils.saveKey(keyPair, file, file);
+
+        Key key = RSAUtils.loadKey(file, 0);
+        decryptByte = RSAUtils.decryptData(Base64Utils.decode(afterencrypt), (PrivateKey) key);
+        decryptStr = new String(decryptByte, "utf-8");
+        System.out.println("解密2：" + decryptStr);
+
+
+        PropertiesConfiguration config = new PropertiesConfiguration(file);
+        String privateKeyValue = config.getString("PRIVATEKEY");
+        PrivateKey key1 = RSAUtils.loadPrivateKey(privateKeyValue);
+        decryptByte = RSAUtils.decryptData(Base64Utils.decode(afterencrypt), key1);
+        decryptStr = new String(decryptByte, "utf-8");
+        System.out.println("解密3：" + decryptStr);
     }
 }

@@ -1,5 +1,9 @@
 package com.example.web.security;
 
+import org.apache.commons.configuration.PropertiesConfiguration;
+import org.apache.commons.configuration.ConfigurationException;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+
 import javax.crypto.Cipher;
 import java.io.*;
 import java.math.BigInteger;
@@ -302,5 +306,47 @@ public class RSAUtils {
         System.out.println("PrivateExponent.length=" + rsaPrivateKey.getPrivateExponent().bitLength());
         System.out.println("PrivatecExponent=" + rsaPrivateKey.getPrivateExponent().toString());
 
+    }
+
+    public static void saveKey(KeyPair keyPair, String publicKeyFile, String privateKeyFile) throws ConfigurationException {
+        PublicKey pubkey = keyPair.getPublic();
+        PrivateKey prikey = keyPair.getPrivate();
+
+        // save public key
+        PropertiesConfiguration publicConfig = new PropertiesConfiguration(publicKeyFile);
+        publicConfig.setProperty("PULIICKEY", Base64Utils.encode(pubkey.getEncoded()));
+        publicConfig.save();
+
+        // save private key
+        PropertiesConfiguration privateConfig = new PropertiesConfiguration(privateKeyFile);
+        privateConfig.setProperty("PRIVATEKEY", Base64Utils.encode(prikey.getEncoded()));
+        privateConfig.save();
+    }
+
+    /**
+     * @param filename
+     * @param type：    1-public 0-private
+     * @return
+     * @throws ConfigurationException
+     * @throws NoSuchAlgorithmException
+     * @throws InvalidKeySpecException
+     */
+    public static Key loadKey(String filename, int type) throws ConfigurationException, NoSuchAlgorithmException, InvalidKeySpecException {
+        PropertiesConfiguration config = new PropertiesConfiguration(filename);
+        KeyFactory keyFactory = KeyFactory.getInstance(RSA, new BouncyCastleProvider());
+//        KeyFactory keyFactory = KeyFactory.getInstance(RSA);
+        if (type == 0) {
+            // privateKey
+            String privateKeyValue = config.getString("PRIVATEKEY");
+            PKCS8EncodedKeySpec priPKCS8 = new PKCS8EncodedKeySpec(Base64Utils.decode(privateKeyValue));
+            PrivateKey privateKey = keyFactory.generatePrivate(priPKCS8);
+            return privateKey;
+        } else {
+            // publicKey
+            String publicKeyValue = config.getString("PULIICKEY");
+            X509EncodedKeySpec bobPubKeySpec = new X509EncodedKeySpec(Base64Utils.decode(publicKeyValue));
+            PublicKey publicKey = keyFactory.generatePublic(bobPubKeySpec);
+            return publicKey;
+        }
     }
 }
